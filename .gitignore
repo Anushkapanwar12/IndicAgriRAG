@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+.cache/
+data/index/
+outputs/*
+!outputs/.gitkeep
+data/benchmark/*
+!data/benchmark/.gitkeep
+
+*.egg-info/

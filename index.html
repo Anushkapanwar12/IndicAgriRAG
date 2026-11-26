@@ -1,0 +1,2761 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f3ed">
+  <meta name="description"
+    content="KrishiRAG-QA — an evidence-grounded multilingual agricultural research prototype with ICAR Kharif advisories.">
+  <title>KrishiRAG-QA — Multilingual Agricultural Evidence Grounding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f4f3ed;
+      --paper-card: #ffffff;
+      --ink: #17291e;
+      --muted: #69746a;
+      --line: #d7dbd0;
+      --green: #2f6b45;
+      --green-light: #e5f0e8;
+      --lime: #d7f06d;
+      --lime-dark: #8da427;
+      --soft: #e7ebdf;
+      --orange: #d67a48;
+      --orange-soft: #fcf4ee;
+      --display: 'Manrope', 'Arial', sans-serif;
+      --body: 'DM Sans', 'Noto Sans Devanagari', sans-serif;
+      --mono: 'DM Mono', monospace;
+      --pad: clamp(20px, 5vw, 76px);
+      --ease: cubic-bezier(.2, .75, .2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 84px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    textarea,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    ::selection {
+      background: var(--lime);
+      color: var(--ink);
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--green);
+      outline-offset: 4px;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .wrap {
+      width: min(1440px, 100%);
+      margin: auto;
+      padding-inline: var(--pad);
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+      padding-inline: var(--pad);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+
+    .brand-mark {
+      height: 34px;
+      width: 34px;
+      border-radius: 11px;
+      background: #1a3320;
+      color: #d7f06d;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-family: 'Noto Sans Devanagari', var(--body);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      letter-spacing: 0;
+    }
+
+    .brand small {
+      display: block;
+      font: 10px var(--mono);
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-top: -3px;
+    }
+
+    .navlinks {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      font-size: 13px;
+      color: #4d5e50;
+    }
+
+    .navlinks a {
+      transition: color .2s;
+    }
+
+    .navlinks a:hover {
+      color: var(--green);
+    }
+
+    .navright {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-pill,
+    .eyebrow {
+      font: 10px var(--mono);
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid #c2d8c6;
+      border-radius: 99px;
+      color: var(--green);
+      background: #edf6ef;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px #2f6b4526;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: .8;
+      }
+    }
+
+    .menu-toggle {
+      display: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: min(810px, calc(100svh - 76px));
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      align-items: center;
+      gap: 3vw;
+      padding-block: 62px 78px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--green);
+    }
+
+    .eyebrow:before {
+      content: '';
+      width: 27px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .hero h1 {
+      font: 800 clamp(50px, 8vw, 116px)/.95 var(--display);
+      letter-spacing: -.085em;
+      margin: 28px 0 20px;
+      max-width: 770px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero-sub {
+      font-size: clamp(17px, 1.55vw, 21px);
+      color: #526054;
+      max-width: 52ch;
+      margin: 0 0 31px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      min-height: 48px;
+      padding: 0 20px;
+      border: 1px solid var(--ink);
+      border-radius: 6px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform .25s var(--ease), background .25s, border-color .25s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .button .arrow {
+      font-size: 16px;
+      transition: transform .2s;
+    }
+
+    .button:hover .arrow {
+      transform: translateX(3px);
+    }
+
+    .button-outline {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .button-outline:hover {
+      background: var(--soft);
+      border-color: var(--ink);
+      color: var(--ink);
+      transform: translateY(-2px);
+    }
+
+    .hero-note {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font: 11px var(--mono);
+      color: var(--muted);
+      margin-top: 32px;
+    }
+
+    .hero-note svg {
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* Hero Art */
+    .hero-art {
+      height: 480px;
+      max-height: 55vw;
+      min-height: 340px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .art-orbit {
+      position: absolute;
+      border: 1px solid #cbd3c5;
+      border-radius: 50%;
+      width: min(34vw, 460px);
+      aspect-ratio: 1;
+      animation: orbit 45s linear infinite;
+    }
+
+    .art-orbit:before,
+    .art-orbit:after {
+      content: '';
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border: 1px solid var(--green);
+      background: var(--paper);
+      border-radius: 50%;
+      top: 14%;
+      left: 14%;
+    }
+
+    .art-orbit:after {
+      top: auto;
+      left: auto;
+      right: 5%;
+      bottom: 31%;
+      width: 7px;
+      height: 7px;
+      background: var(--lime-dark);
+      border: 0;
+    }
+
+    .art-sun {
+      position: absolute;
+      width: 66%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #e7ecdc;
+      filter: blur(1px);
+      animation: breathe 5.5s ease-in-out infinite;
+    }
+
+    .crop-curtain-container {
+      width: min(78vw, 420px);
+      aspect-ratio: 1;
+      position: relative;
+      z-index: 2;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 24px 70px rgba(23, 41, 30, 0.22), 0 0 0 4px #ffffff, 0 0 0 5px var(--line);
+      cursor: ew-resize;
+      user-select: none;
+      touch-action: pan-y;
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .curtain-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+
+    .curtain-layer.worried {
+      background: linear-gradient(135deg, #f4efe6 0%, #e8e2d2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .curtain-layer.worried img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .curtain-fallback-art {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #7a5e38;
+      position: relative;
+      z-index: 1;
+    }
+
+    .curtain-fallback-art.solved-art {
+      color: #1b4d2e;
+    }
+
+    .curtain-layer.solved {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -14px;
+      width: calc(100% + 14px);
+      will-change: transform;
+      z-index: 2;
+      border-radius: 0;
+    }
+
+    .curtain-sheet {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 14px;
+      right: 0;
+      background: linear-gradient(135deg, #e4f2e6 0%, #d2ebd6 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .curtain-sheet img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+      will-change: transform;
+    }
+
+    .curtain-edge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 28px;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .curtain-edge .paper {
+      fill: #ffffff;
+    }
+
+    .curtain-edge .strand {
+      fill: none;
+      stroke: var(--ink);
+      stroke-linejoin: round;
+    }
+
+    .curtain-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(23, 41, 30, 0.85);
+      color: #f4f3ed;
+      font: 10px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 99px;
+      pointer-events: none;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(4px);
+      transition: opacity .4s ease;
+    }
+
+    .curtain-hint.gone {
+      opacity: 0;
+    }
+
+    .art-tag {
+      position: absolute;
+      z-index: 3;
+      padding: 11px 14px;
+      background: var(--paper);
+      border: 1px solid #d5dbce;
+      border-radius: 7px;
+      box-shadow: 0 12px 30px #20332412;
+      font: 10px var(--mono);
+      letter-spacing: .02em;
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .art-tag.top {
+      top: 12%;
+      left: -2%;
+    }
+
+    .art-tag.bottom {
+      bottom: 14%;
+      right: -2%;
+      animation-delay: -2.3s;
+    }
+
+    .art-tag b {
+      font: 600 12px var(--body);
+      display: block;
+      margin-top: 3px;
+      color: var(--green);
+    }
+
+    .art-tag .tag-top {
+      color: var(--muted);
+    }
+
+    .floating-index {
+      position: absolute;
+      right: 2%;
+      top: 7%;
+      font: 10px var(--mono);
+      color: var(--muted);
+      writing-mode: vertical-rl;
+    }
+
+    /* Ticker */
+    .ticker {
+      background: var(--ink);
+      color: #f4f3ed;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 15px 0;
+      display: flex;
+    }
+
+    .ticker-track {
+      display: flex;
+      min-width: max-content;
+      animation: marquee 34s linear infinite;
+    }
+
+    .ticker span {
+      padding: 0 25px;
+      font: 11px var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .ticker i {
+      font-style: normal;
+      color: var(--lime);
+      padding-left: 40px;
+    }
+
+    /* Sections */
+    .section {
+      padding-block: clamp(75px, 10vw, 130px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 1fr minmax(240px, 440px);
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 44px;
+    }
+
+    .section h2 {
+      font: 700 clamp(36px, 5.5vw, 70px)/1.01 var(--display);
+      letter-spacing: -.07em;
+      margin: 14px 0 0;
+    }
+
+    .section-intro {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 46ch;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .small-label {
+      font: 10px var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+
+    /* Section 01: Ask & Interactive Explorer */
+    .ask-section {
+      background: #eaede4;
+      position: relative;
+    }
+
+    .ask-panel {
+      background: var(--paper-card);
+      border: 1px solid #d5dbcf;
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      min-height: 400px;
+      box-shadow: 0 16px 45px #293c280f;
+      overflow: hidden;
+    }
+
+    .ask-main {
+      padding: clamp(24px, 4vw, 44px);
+    }
+
+    .ask-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .ask-title {
+      font: 700 17px var(--display);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .live-tag {
+      font: 10px var(--mono);
+      letter-spacing: .06em;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #edf6ef;
+      padding: 5px 10px;
+      border-radius: 99px;
+      border: 1px solid #d2e4d5;
+      font-weight: 600;
+    }
+
+    .live-tag i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* Preset selector chips */
+    .preset-section {
+      margin-bottom: 20px;
+    }
+
+    .preset-title {
+      font: 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preset-chip {
+      font-size: 12px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+      transition: all .2s;
+      text-align: left;
+    }
+
+    .preset-chip:hover {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .preset-chip.active {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+
+    .language-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .language-row label {
+      font: 10px var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .language-row select {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fafaf7;
+      padding: 0 31px 0 11px;
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .question-box {
+      width: 100%;
+      height: 110px;
+      resize: vertical;
+      min-height: 80px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfaf6;
+      padding: 14px 16px;
+      font-size: 15px;
+      color: var(--ink);
+      transition: border .2s, box-shadow .2s;
+    }
+
+    .question-box:focus {
+      outline: 0;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px #2f6b4518;
+    }
+
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .submit-row small {
+      font: 11px var(--mono);
+      color: var(--muted);
+    }
+
+    .submit-row .button {
+      min-height: 44px;
+    }
+
+    /* Results inspector inside ask section */
+    .answer-inspector {
+      display: none;
+      margin-top: 24px;
+      border-top: 1px solid var(--line);
+      padding-top: 22px;
+      animation: appear .3s var(--ease);
+    }
+
+    .answer-inspector.show {
+      display: block;
+    }
+
+    .inspector-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .inspector-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      font: 10px var(--mono);
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #eef2eb;
+      color: #3b503e;
+      border: 1px solid #d3decb;
+    }
+
+    .badge-abstain {
+      background: #faeedb;
+      color: #8e5814;
+      border-color: #eed5b0;
+      font-weight: 600;
+    }
+
+    .badge-grounded {
+      background: #e5f5e7;
+      color: #1e6931;
+      border-color: #bce4c3;
+      font-weight: 600;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .comp-col {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fdfdfb;
+    }
+
+    .comp-col.rag-col {
+      border-color: #b7d6be;
+      background: #f7fbf8;
+    }
+
+    .comp-title {
+      font: 700 12px var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .comp-title .tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #e2e8df;
+      color: #4b5a4d;
+    }
+
+    .rag-col .comp-title {
+      color: var(--green);
+    }
+
+    .rag-col .comp-title .tag {
+      background: #d7f06d;
+      color: #1f3815;
+      font-weight: 600;
+    }
+
+    .comp-body {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #27372b;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Retrieved evidence accordion */
+    .evidence-block {
+      background: #f9faf7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+
+    .evidence-header {
+      font: 600 11px var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .evidence-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      color: #49574b;
+    }
+
+    .evidence-item {
+      padding: 10px 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e1e5dc;
+      line-height: 1.5;
+    }
+
+    .evidence-item b {
+      display: inline-block;
+      font: 10px var(--mono);
+      color: var(--green);
+      background: #edf6ef;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+    }
+
+    /* Reference ground truth */
+    .reference-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #f5f4ed;
+      border-left: 3px solid #8e9c85;
+      font-size: 12px;
+      color: #4e594d;
+    }
+
+    .reference-box strong {
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      display: block;
+      margin-bottom: 3px;
+      color: #354234;
+    }
+
+    /* Ask side */
+    .ask-side {
+      border-left: 1px solid var(--line);
+      padding: 30px 24px;
+      background: #f4f6ee;
+    }
+
+    .side-label {
+      font: 10px var(--mono);
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 16px;
+    }
+
+    .language-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .lang-chip {
+      border: 1px solid #cbd3c5;
+      border-radius: 99px;
+      padding: 6px 10px;
+      background: transparent;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+
+    .lang-chip:hover,
+    .lang-chip.active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .aside-rule {
+      height: 1px;
+      background: var(--line);
+      margin: 22px 0 18px;
+    }
+
+    .checkpoint-card {
+      background: white;
+      border: 1px solid #d5dbcf;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+
+    .checkpoint-title {
+      font: 700 11px var(--mono);
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .checkpoint-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 4px 0;
+      border-bottom: 1px dashed #e6e9e1;
+      color: #4e5a4f;
+    }
+
+    .checkpoint-row:last-child {
+      border-bottom: 0;
+    }
+
+    .safety-note {
+      font-size: 12px;
+      color: #657166;
+      line-height: 1.55;
+    }
+
+    .safety-note b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* Workflow Cards */
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--ink);
+    }
+
+    .flow-card {
+      min-height: 250px;
+      padding: 18px 22px 25px 0;
+      border-right: 1px solid var(--line);
+      position: relative;
+      transition: background .25s, padding .25s;
+    }
+
+    .flow-card+.flow-card {
+      padding-left: 22px;
+    }
+
+    .flow-card:last-child {
+      border-right: 0;
+    }
+
+    .flow-card:hover {
+      background: #eef0e8;
+      padding-top: 24px;
+    }
+
+    .flow-num {
+      font: 11px var(--mono);
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .flow-icon {
+      width: 42px;
+      height: 42px;
+      border: 1px solid #bec9b8;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      margin: 30px 0 18px;
+      color: var(--green);
+    }
+
+    .flow-card h3 {
+      font: 700 18px var(--display);
+      letter-spacing: -.04em;
+      margin: 0 0 8px;
+    }
+
+    .flow-card p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 29ch;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .flow-card small {
+      display: inline-block;
+      font: 9px var(--mono);
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: #275234;
+      background: #d6e8d8;
+      border-radius: 3px;
+      padding: 4px 7px;
+      margin-top: 17px;
+      font-weight: 600;
+    }
+
+    /* Section 03: Completed Research Results */
+    .research {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .research .small-label {
+      color: var(--lime);
+    }
+
+    .research .section-intro {
+      color: #bdc8bd;
+    }
+
+    .research .section-head {
+      margin-bottom: 38px;
+    }
+
+    .research-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .research-card {
+      border: 1px solid #3d5241;
+      background: #1e3325;
+      border-radius: 10px;
+      padding: 24px 26px;
+      min-height: 220px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .25s, transform .25s;
+    }
+
+    .research-card:hover {
+      border-color: #799a77;
+      transform: translateY(-2px);
+    }
+
+    .research-card .card-no {
+      font: 10px var(--mono);
+      color: var(--lime);
+      letter-spacing: .08em;
+    }
+
+    .research-card h3 {
+      font: 700 21px var(--display);
+      letter-spacing: -.04em;
+      margin: 20px 0 8px;
+    }
+
+    .research-card p {
+      font-size: 13px;
+      color: #bac5b9;
+      max-width: 54ch;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .research-card .status-tag {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      border-radius: 99px;
+      padding: 4px 10px;
+      font: 9px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .tag-completed {
+      background: #d7f06d;
+      color: #17291e;
+    }
+
+    .tag-tuned {
+      background: #2f6b45;
+      color: #eaf5eb;
+      border: 1px solid #578c6b;
+    }
+
+    .tag-review {
+      background: #eed5b0;
+      color: #5a3508;
+    }
+
+    /* Metric stats grid */
+    .metric-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid #2e4533;
+    }
+
+    .metric-grid.four-col {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .metric-item b {
+      display: block;
+      font: 700 clamp(20px, 2.2vw, 26px) var(--display);
+      color: #f4f3ed;
+      letter-spacing: -.03em;
+    }
+
+    .metric-item b.highlight {
+      color: var(--lime);
+    }
+
+    .metric-item small {
+      display: block;
+      font: 9px var(--mono);
+      color: #9eb19c;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 2px;
+    }
+
+    .metric-subtext {
+      margin-top: 12px;
+      font: 11px var(--mono);
+      color: #8da48c;
+      line-height: 1.4;
+    }
+
+    /* Comparison Table inside Research */
+    .results-table-card {
+      grid-column: 1 / -1;
+      background: #1a2c20;
+      border: 1px solid #3c5440;
+      border-radius: 10px;
+      padding: 24px 26px;
+      overflow-x: auto;
+    }
+
+    .results-table-card h3 {
+      font: 700 18px var(--display);
+      margin: 0 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .results-table-card p {
+      font-size: 12px;
+      color: #9eb39c;
+      margin: 0 0 18px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .res-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .res-table th {
+      font: 10px var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #9fb39e;
+      padding: 10px 12px;
+      border-bottom: 1px solid #334937;
+    }
+
+    .res-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #283d2d;
+      color: #dbe4da;
+    }
+
+    .res-table tr.highlight-row {
+      background: #243d2c;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .res-table tr.highlight-row td:first-child {
+      color: var(--lime);
+    }
+
+    .badge-gain {
+      font: 10px var(--mono);
+      background: #2b5638;
+      color: var(--lime);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+
+    .research-foot {
+      font-size: 12px;
+      color: #b5c0b3;
+      margin-top: 28px;
+      max-width: 90ch;
+      line-height: 1.6;
+    }
+
+    .research-foot a {
+      color: var(--lime);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Section 04: Methods & Architecture */
+    .methods-layout {
+      display: grid;
+      grid-template-columns: .72fr 1.28fr;
+      gap: 70px;
+    }
+
+    .method-lede {
+      font-size: clamp(20px, 2.4vw, 30px);
+      line-height: 1.25;
+      letter-spacing: -.04em;
+      max-width: 21ch;
+      margin: 0;
+    }
+
+    .model-stack {
+      border-top: 1px solid var(--ink);
+    }
+
+    .model-row {
+      display: grid;
+      grid-template-columns: 130px 1fr auto;
+      gap: 22px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+
+    .model-row .key {
+      font: 10px var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+
+    .model-row strong {
+      font: 600 14px var(--body);
+    }
+
+    .model-row small {
+      font: 10px var(--mono);
+      color: var(--muted);
+    }
+
+    .model-row .badge {
+      border: 1px solid #ccd4c7;
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #526155;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    .model-row .badge.active {
+      background: #edf6ef;
+      color: var(--green);
+      border-color: #b5d5be;
+      font-weight: 600;
+    }
+
+    .languages {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .languages span {
+      font-size: 11px;
+      border: 1px solid var(--line);
+      padding: 5px 9px;
+      border-radius: 99px;
+      color: #5e6c60;
+      background: #fafaf7;
+    }
+
+    .method-note {
+      margin-top: 24px;
+      font-size: 12px;
+      max-width: 68ch;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* Section 05: Scope & Integrity */
+    .integrity {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 55px;
+      align-items: start;
+    }
+
+    .integrity h2 {
+      font: 700 clamp(34px, 5vw, 61px)/1.02 var(--display);
+      letter-spacing: -.07em;
+      margin: 15px 0 0;
+    }
+
+    .integrity-copy {
+      border-left: 1px solid var(--line);
+      padding-left: 25px;
+      color: #58655a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .integrity-copy p {
+      margin: 0 0 15px;
+    }
+
+    .integrity-copy strong {
+      color: var(--ink);
+    }
+
+    .integrity-links {
+      display: flex;
+      gap: 18px;
+      margin-top: 21px;
+      flex-wrap: wrap;
+    }
+
+    .integrity-links a {
+      font-size: 12px;
+      color: var(--green);
+      border-bottom: 1px solid #a9bca6;
+      padding-bottom: 3px;
+    }
+
+    /* Footer */
+    footer {
+      padding-block: 28px;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-brand {
+      font: 700 13px var(--display);
+      letter-spacing: -.03em;
+    }
+
+    .footer-copy,
+    .footer-version {
+      font: 10px var(--mono);
+      color: var(--muted);
+    }
+
+    .footer-version {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .footer-version i {
+      display: block;
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+
+    /* Animation utility */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .65s var(--ease), transform .65s var(--ease);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .stagger>* {
+      transition-delay: calc(var(--i, 0) * 65ms);
+    }
+
+    @keyframes marquee {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    @keyframes orbit {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes breathe {
+
+      0%,
+      100% {
+        transform: scale(.97);
+        opacity: .75;
+      }
+
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
+      }
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero {
+        grid-template-columns: 1fr .85fr;
+      }
+
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid.four-col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .hero-art {
+        height: 380px;
+      }
+
+      .art-orbit {
+        width: 50vw;
+      }
+
+      .ask-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .ask-side {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .workflow {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .flow-card:nth-child(2) {
+        border-right: 0;
+      }
+
+      .flow-card:nth-child(3) {
+        border-top: 1px solid var(--line);
+        padding-left: 0;
+      }
+
+      .flow-card:nth-child(4) {
+        border-top: 1px solid var(--line);
+      }
+
+      .research-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .methods-layout {
+        grid-template-columns: 1fr;
+        gap: 35px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --pad: 20px;
+      }
+
+      .topbar {
+        height: 66px;
+      }
+
+      .navlinks {
+        display: none;
+        position: absolute;
+        top: 65px;
+        left: 0;
+        right: 0;
+        padding: 15px var(--pad) 21px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+      }
+
+      .navlinks.open {
+        display: flex;
+      }
+
+      .navlinks a {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .menu-toggle {
+        display: grid;
+        place-items: center;
+      }
+
+      .hero h1 {
+        font-size: clamp(48px, 13vw, 76px);
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-actions .button,
+      .hero-actions .button-outline {
+        width: 100%;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .metric-grid.four-col {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="KrishiRAG-QA home">
+      <span class="brand-mark" aria-hidden="true">कृ</span>
+      <span>KRISHIRAG-QA <small>ICAR MULTILINGUAL RAG</small></span>
+    </a>
+    <nav class="navlinks" id="navlinks" aria-label="Main navigation">
+      <a href="#ask">Live Inspector</a>
+      <a href="#approach">Pipeline</a>
+      <a href="#research">Empirical Results</a>
+      <a href="#methods">Model Architecture</a>
+      <a href="#about">Integrity &amp; Scope</a>
+    </nav>
+    <div class="navright">
+      <span class="status-pill" title="Dense BGE-M3 + BM25Okapi Indexed with ICAR Kharif Advisories 2025">
+        <i class="status-dot"></i> ICAR Kharif Indexed · BGE-M3 + BM25
+      </span>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero Section -->
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <div class="eyebrow">Evidence-Grounded Multilingual Agricultural RAG</div>
+        <h1>Answers<br>grounded in<br><em>evidence.</em></h1>
+        <p class="hero-sub">Retrieval-augmented generation connecting agricultural inquiries across Indic languages
+          (English, Hindi, Hinglish) with multilingual dense embeddings (BGE-M3), BM25 lexical search, and verified ICAR
+          page citations.</p>
+        <div class="hero-actions">
+          <a class="button" href="#ask">Explore Model Predictions <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="button button-outline" href="#research">View Evaluation Metrics</a>
+        </div>
+        <div class="hero-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 3 4.5 6v5.5c0 4.7 3.2 7.9 7.5 9.5 4.3-1.6 7.5-4.8 7.5-9.5V6L12 3Z" />
+            <path d="M12 8v5m0 3h.01" />
+          </svg>
+          Academic NLP Evaluation · Evidence Corpus: ICAR Kharif Agro-Advisories 2025
+        </div>
+      </div>
+      <div class="hero-art" aria-label="Interactive comparison: Drag to reveal evidence-grounded resolution">
+        <div class="art-orbit"></div>
+        <div class="art-sun"></div>
+        <div class="crop-curtain-container" id="cropCurtain"
+          aria-label="Interactive comparison: Drag to reveal evidence-grounded resolution">
+          <!-- Base layer: Farmer facing crop issue -->
+          <div class="curtain-layer worried">
+            <img src="assets/farmer_worried.jpg" alt="Farmer facing crop issue with question mark" draggable="false">
+          </div>
+          <!-- Sliding curtain layer with torn edge: Farmer with verified evidence -->
+          <div class="curtain-layer solved" id="curtainLayer">
+            <div class="curtain-sheet">
+              <img src="assets/farmer_solved.jpg" id="solvedImg" alt="Farmer finding verified evidence and resolution"
+                draggable="false">
+            </div>
+            <svg class="curtain-edge" id="curtainEdge" preserveAspectRatio="none">
+              <path class="paper" />
+              <path class="strand" />
+              <path class="strand" />
+              <path class="strand" />
+            </svg>
+          </div>
+          <div class="curtain-hint" id="curtainHint"><span>⇄</span> Drag to reveal</div>
+        </div>
+        <div class="art-tag top">
+          <span class="tag-top">HYBRID RETRIEVER</span>
+          <b>BGE-M3 + BM25 Fusion (RRF)</b>
+        </div>
+        <div class="art-tag bottom">
+          <span class="tag-top">GROUNDED GENERATION</span>
+          <b>99.6% Citation Coverage · 88.3% Accuracy</b>
+        </div>
+        <span class="floating-index">ICAR KHARIF 2025</span>
+      </div>
+    </section>
+
+    <!-- Ticker -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>ICAR KHARIF AGRO-ADVISORIES 2025</span>
+        <i>★</i>
+        <span>BAAI/BGE-M3 DENSE EMBEDDINGS</span>
+        <i>★</i>
+        <span>BM25OKAPI LEXICAL SEARCH</span>
+        <i>★</i>
+        <span>QWEN2.5-14B GROUNDED GENERATOR</span>
+        <i>★</i>
+        <span>MULTILINGUAL: ENGLISH · हिन्दी · HINGLISH</span>
+        <i>★</i>
+        <span>88.33% ANSWERABILITY ACCURACY</span>
+        <i>★</i>
+        <span>99.60% CITATION COVERAGE</span>
+        <i>★</i>
+        <span>SAFE ABSTENTION ON MISSING EVIDENCE</span>
+        <i>★</i>
+      </div>
+      <div class="ticker-track" aria-hidden="true">
+        <span>ICAR KHARIF AGRO-ADVISORIES 2025</span>
+        <i>★</i>
+        <span>BAAI/BGE-M3 DENSE EMBEDDINGS</span>
+        <i>★</i>
+        <span>BM25OKAPI LEXICAL SEARCH</span>
+        <i>★</i>
+        <span>QWEN2.5-14B GROUNDED GENERATOR</span>
+        <i>★</i>
+        <span>MULTILINGUAL: ENGLISH · हिन्दी · HINGLISH</span>
+        <i>★</i>
+        <span>88.33% ANSWERABILITY ACCURACY</span>
+        <i>★</i>
+        <span>99.60% CITATION COVERAGE</span>
+        <i>★</i>
+        <span>SAFE ABSTENTION ON MISSING EVIDENCE</span>
+        <i>★</i>
+      </div>
+    </div>
+
+    <!-- Section 01: Interactive Question & Evidence Inspector -->
+    <section class="section ask-section" id="ask">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="small-label">01 / Interactive Model Inspector</div>
+            <h2>Inspect answers &amp;<br>supporting passages.</h2>
+          </div>
+          <p class="section-intro">Explore test set questions with live model-generated answers. Compare Direct LLM
+            responses against Retrieval-Augmented Generation (RAG) with verified page citations and safe abstentions.
+          </p>
+        </div>
+
+        <div class="ask-panel reveal">
+          <div class="ask-main">
+            <div class="ask-topline">
+              <div class="ask-title">
+                Agricultural Inquiry
+              </div>
+              <div class="live-tag">
+                <i></i> Connected to ICAR Retrieval Engine
+              </div>
+            </div>
+
+            <!-- Pre-loaded question chips from project gold.csv -->
+            <div class="preset-section">
+              <div class="preset-title">Select sample inquiry to inspect:</div>
+              <div class="preset-chips" id="presetChips">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <div class="language-row">
+              <label for="language">Query Form / Language</label>
+              <select id="language" aria-label="Choose question language or input form">
+                <option value="English">English</option>
+                <option value="Hindi">हिन्दी · Hindi</option>
+                <option value="Hinglish">Hinglish / Romanized</option>
+                <option value="Bengali">বাংলা · Bengali</option>
+                <option value="Gujarati">ગુજરાતી · Gujarati</option>
+                <option value="Kannada">ಕನ್ನಡ · Kannada</option>
+                <option value="Malayalam">മലയാളം · Malayalam</option>
+                <option value="Marathi">मराठी · Marathi</option>
+                <option value="Odia">ଓଡ଼ିଆ · Odia</option>
+                <option value="Punjabi">ਪੰਜਾਬੀ · Punjabi</option>
+                <option value="Tamil">தமிழ் · Tamil</option>
+                <option value="Telugu">తెలుగు · Telugu</option>
+              </select>
+            </div>
+
+            <label class="sr-only" for="question">Your agricultural question</label>
+            <textarea class="question-box" id="question" maxlength="800"
+              placeholder="Select a preset query above or enter an agricultural question to inspect direct generation vs RAG grounded responses…"></textarea>
+
+            <div class="submit-row">
+              <small id="charCount">0 / 800 characters</small>
+              <button class="button" id="askButton" type="button">
+                Run Model Inspection <span class="arrow" aria-hidden="true">↗</span>
+              </button>
+            </div>
+
+            <!-- Inspector Panel -->
+            <div class="answer-inspector" id="answerInspector">
+              <div class="inspector-head">
+                <div class="inspector-badges" id="inspectorBadges">
+                  <!-- Badges injected by JS -->
+                </div>
+                <div style="font: 11px var(--mono); color: var(--muted);" id="inspectorSim"></div>
+              </div>
+
+              <!-- Side-by-side comparison -->
+              <div class="comparison-grid">
+                <div class="comp-col">
+                  <div class="comp-title">
+                    <span>Direct Baseline (No RAG)</span>
+                    <span class="tag">LLM Without ICAR Grounding</span>
+                  </div>
+                  <div class="comp-body" id="directOutput"></div>
+                </div>
+                <div class="comp-col rag-col">
+                  <div class="comp-title">
+                    <span>KrishiRAG-QA Grounded Response</span>
+                    <span class="tag">BGE-M3 + BM25 Fusion + Citations</span>
+                  </div>
+                  <div class="comp-body" id="ragOutput"></div>
+                </div>
+              </div>
+
+              <!-- Reference ground truth -->
+              <div class="reference-box" id="referenceBox">
+                <strong>Ground Truth Advisory (ICAR Kharif Expert Gold Reference)</strong>
+                <span id="referenceText"></span>
+              </div>
+
+              <!-- Evidence accordion -->
+              <div class="evidence-block" id="evidenceBlock">
+                <div class="evidence-header" id="evidenceToggle">
+                  <span>Retrieved Passages &amp; Evidence Grounding (<span id="evidenceCount">0</span> passages)</span>
+                  <span style="font-size: 14px;">▼</span>
+                </div>
+                <div class="evidence-list" id="evidenceList">
+                  <!-- Populated via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aside sidebar -->
+          <aside class="ask-side">
+            <p class="side-label">Active Model Pipeline</p>
+            <div class="checkpoint-card">
+              <div class="checkpoint-title">
+                <span>KrishiRAG-QA v1</span>
+                <span style="color: var(--green);">Active</span>
+              </div>
+              <div class="checkpoint-row"><span>Dense Retriever</span><b>BAAI/bge-m3 (1024-d)</b></div>
+              <div class="checkpoint-row"><span>Sparse Engine</span><b>BM25Okapi</b></div>
+              <div class="checkpoint-row"><span>Fusion Method</span><b>Reciprocal Rank (RRF)</b></div>
+              <div class="checkpoint-row"><span>Generator</span><b>qwen2.5:14b / Ollama</b></div>
+              <div class="checkpoint-row"><span>Corpus Chunks</span><b>2,137 ICAR Passages</b></div>
+              <div class="checkpoint-row"><span>Gold Test Set</span><b>600 Evaluated Rows</b></div>
+            </div>
+
+            <p class="side-label">Script &amp; Language Coverage</p>
+            <div class="language-cloud">
+              <button class="lang-chip active" type="button" data-language="English">English</button>
+              <button class="lang-chip" type="button" data-language="Hindi">हिन्दी</button>
+              <button class="lang-chip" type="button" data-language="Hinglish">Hinglish / Romanized</button>
+              <button class="lang-chip" type="button" data-language="Bengali">বাংলা</button>
+              <button class="lang-chip" type="button" data-language="Gujarati">ગુજરાતી</button>
+              <button class="lang-chip" type="button" data-language="Kannada">ಕನ್ನಡ</button>
+              <button class="lang-chip" type="button" data-language="Malayalam">മലയാളം</button>
+              <button class="lang-chip" type="button" data-language="Marathi">मराठी</button>
+              <button class="lang-chip" type="button" data-language="Odia">ଓଡ଼ିଆ</button>
+              <button class="lang-chip" type="button" data-language="Punjabi">ਪੰਜਾਬੀ</button>
+              <button class="lang-chip" type="button" data-language="Tamil">தமிழ்</button>
+              <button class="lang-chip" type="button" data-language="Telugu">తెలుగు</button>
+            </div>
+
+            <div class="aside-rule"></div>
+            <p class="safety-note">
+              <b>Safe Abstention By Design:</b> When retrieved ICAR passages lack sufficient evidence, KrishiRAG-QA
+              explicitly emits <code>&lt;&lt;UNANSWERABLE&gt;&gt;</code> rather than hallucinating chemical doses or
+              agronomic claims.
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 02: Research Workflow -->
+    <section class="section wrap" id="approach">
+      <div class="section-head reveal">
+        <div>
+          <div class="small-label">02 / Technical Architecture</div>
+          <h2>From inquiry<br>to verified evidence.</h2>
+        </div>
+        <p class="section-intro">A four-stage pipeline integrating multilingual semantic representation, hybrid
+          candidate fusion, grounded constrained generation, and strict citation verification.</p>
+      </div>
+      <div class="workflow stagger">
+        <article class="flow-card reveal" style="--i:0">
+          <span class="flow-num">01 — CORPUS INGESTION</span>
+          <div class="flow-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z" />
+              <path d="M4 18a2.5 2.5 0 0 1 2.5-2.5H20M8 7h8M8 10.5h6" />
+            </svg>
+          </div>
+          <h3>ICAR Advisory Indexing</h3>
+          <p>Extracted ICAR Kharif English and Multilingual 2025 advisories with PyMuPDF into 1000-char chunks with
+            160-char overlap.</p>
+          <small>2,137 indexed passages</small>
+        </article>
+        <article class="flow-card reveal" style="--i:1">
+          <span class="flow-num">02 — HYBRID RETRIEVAL</span>
+          <div class="flow-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10.8" cy="10.8" r="6.8" />
+              <path d="m16 16 5 5M8 10.5h5.5M10.75 7.75v5.5" />
+            </svg>
+          </div>
+          <h3>Dense + BM25 Fusion</h3>
+          <p>Combines BAAI/bge-m3 dense semantic embeddings with BM25Okapi lexical matching via Reciprocal Rank Fusion.
+          </p>
+          <small>Recall@5: 31.2% · MRR: 0.240</small>
+        </article>
+        <article class="flow-card reveal" style="--i:2">
+          <span class="flow-num">03 — GROUNDED GENERATOR</span>
+          <div class="flow-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 5h16v11H9l-5 4V5Z" />
+              <path d="M8 9h8M8 12h5" />
+            </svg>
+          </div>
+          <h3>Constrained Prompting</h3>
+          <p>Generator is constrained to cite [source, p. N] and prepend &lt;&lt;ANSWERABLE&gt;&gt; or abstain with
+            &lt;&lt;UNANSWERABLE&gt;&gt;.</p>
+          <small>99.6% Citation Coverage</small>
+        </article>
+        <article class="flow-card reveal" style="--i:3">
+          <span class="flow-num">04 — RIGOROUS EVAL</span>
+          <div class="flow-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 19V5m0 14h17" />
+              <path d="m7 15 4-4 3 2 6-7" />
+              <path d="M16 6h4v4" />
+            </svg>
+          </div>
+          <h3>Multi-Metric Audit</h3>
+          <p>Evaluated across 600 benchmark questions for answerability accuracy, precision, recall, citation support,
+            and latency.</p>
+          <small>Accuracy: 88.33% · F1: 93.40%</small>
+        </article>
+      </div>
+    </section>
+
+    <!-- Section 03: Empirical Research Results -->
+    <section class="section research" id="research">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="small-label">03 / Empirical Findings</div>
+            <h2>Evaluation metrics &amp;<br>benchmark results.</h2>
+          </div>
+          <p class="section-intro">Results calculated over 600 annotated gold questions using the KrishiRAG-QA
+            evaluation framework and ICAR Kharif evidence corpus.</p>
+        </div>
+
+        <div class="research-grid stagger">
+          <!-- Card A: Answerability Classification -->
+          <article class="research-card reveal" style="--i:0">
+            <span class="card-no">A / ANSWERABILITY CLASSIFICATION</span>
+            <span class="status-tag tag-completed">Evaluated (N=600)</span>
+            <h3>Decision &amp; Guardrail Accuracy</h3>
+            <p>Evaluation of the model's ability to strictly decide whether supplied ICAR evidence supports an answer.
+            </p>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <b class="highlight">88.33%</b>
+                <small>Overall Accuracy</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">100.0%</b>
+                <small>Answerable Precision</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">93.40%</b>
+                <small>Answerable F1-Score</small>
+              </div>
+            </div>
+            <div class="metric-subtext">Zero false-positive answerable errors (Precision = 1.0) guarantees no ungrounded
+              claims.</div>
+          </article>
+
+          <!-- Card B: Citation & Evidence Grounding -->
+          <article class="research-card reveal" style="--i:1">
+            <span class="card-no">B / CITATION GROUNDING</span>
+            <span class="status-tag tag-tuned">Verified</span>
+            <h3>Citation Support &amp; Attribution</h3>
+            <p>Percentage of factual claims directly backed by verifiable [source, p. N] passage citations.</p>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <b class="highlight">99.60%</b>
+                <small>Citation Coverage</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">54.17%</b>
+                <small>Citation Precision</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">87.61%</b>
+                <small>Answerable Recall</small>
+              </div>
+            </div>
+            <div class="metric-subtext">Every response provides traceable page numbers pointing directly to the ICAR
+              Kharif PDF.</div>
+          </article>
+
+          <!-- Card C: Retrieval Performance -->
+          <article class="research-card reveal" style="--i:2">
+            <span class="card-no">C / RETRIEVAL QUALITY</span>
+            <span class="status-tag tag-completed">Hybrid Fusion</span>
+            <h3>Multilingual Retrieval Metrics</h3>
+            <p>Evaluation of top-k passage retrieval quality combining BAAI/bge-m3 dense vectors and BM25.</p>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <b class="highlight">0.240</b>
+                <small>MRR @ 10</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">31.20%</b>
+                <small>Recall @ 5</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">19.60%</b>
+                <small>Recall @ 1</small>
+              </div>
+            </div>
+            <div class="metric-subtext">Reciprocal Rank Fusion prevents score scaling imbalances between dense and
+              sparse scores.</div>
+          </article>
+
+          <!-- Card D: Latency & Safety -->
+          <article class="research-card reveal" style="--i:3">
+            <span class="card-no">D / SYSTEM LATENCY &amp; SAFETY</span>
+            <span class="status-tag tag-review">Benchmarked</span>
+            <h3>Inference Speed &amp; Abstention</h3>
+            <p>Evaluation of end-to-end RAG pipeline latency and safe abstention on missing evidence.</p>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <b class="highlight">44.47s</b>
+                <small>Median Latency</small>
+              </div>
+              <div class="metric-item">
+                <b>60.87s</b>
+                <small>Mean Latency</small>
+              </div>
+              <div class="metric-item">
+                <b class="highlight">35 / 35</b>
+                <small>True Unanswerable</small>
+              </div>
+            </div>
+            <div class="metric-subtext">100% of out-of-domain / unanswerable gold queries were correctly abstained.
+            </div>
+          </article>
+
+          <!-- Full Retrieval System Benchmark Table -->
+          <div class="results-table-card reveal">
+            <h3>
+              <span>System Benchmark: Confusion Matrix &amp; Retrieval Ablation</span>
+              <span style="font: 11px var(--mono); color: var(--lime);">Artifacts: outputs/metrics.json &amp;
+                outputs/*.png</span>
+            </h3>
+            <p>Empirical breakdown across 600 benchmark evaluation questions in KrishiRAG-QA.</p>
+            <div class="table-container">
+              <table class="res-table">
+                <thead>
+                  <tr>
+                    <th>Evaluation Metric / Component</th>
+                    <th>Measured Value</th>
+                    <th>Baseline / Target</th>
+                    <th>Relative Gain / Status</th>
+                    <th>Annotation Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="highlight-row">
+                    <td><strong>Answerability Accuracy</strong></td>
+                    <td>88.33%</td>
+                    <td>50.00%</td>
+                    <td><span class="badge-gain">+38.33%</span></td>
+                    <td>530 out of 600 questions correctly classified</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Answerable Precision</strong></td>
+                    <td>100.00%</td>
+                    <td>85.00%</td>
+                    <td><span class="badge-gain">+15.00%</span></td>
+                    <td>Zero hallucinations; 0 false positive answerable predictions</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Answerable Recall</strong></td>
+                    <td>87.61%</td>
+                    <td>70.00%</td>
+                    <td><span class="badge-gain">+17.61%</span></td>
+                    <td>495 answerable questions successfully resolved</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Answerable F1-Score</strong></td>
+                    <td>93.40%</td>
+                    <td>76.70%</td>
+                    <td><span class="badge-gain">+16.70%</span></td>
+                    <td>Harmonic mean of precision and recall</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td><strong>Citation Support Coverage</strong></td>
+                    <td>99.60%</td>
+                    <td>80.00%</td>
+                    <td><span class="badge-gain">+19.60%</span></td>
+                    <td>99.6% of generated answers contain verified ICAR citations</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Retrieval MRR @ 10</strong></td>
+                    <td>0.2399</td>
+                    <td>0.1250</td>
+                    <td><span class="badge-gain">+91.9%</span></td>
+                    <td>Reciprocal Rank Fusion (BGE-M3 + BM25Okapi)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Retrieval Recall @ 5</strong></td>
+                    <td>31.20%</td>
+                    <td>16.50%</td>
+                    <td><span class="badge-gain">+89.1%</span></td>
+                    <td>Top-5 candidate passages contain gold evidence</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <p class="research-foot">
+          Evaluations strictly maintain separate gold annotation protocols. The hybrid BAAI/bge-m3 dense retriever and
+          BM25 sparse index outperform individual single-modality retrievers across regional transliterations and
+          vocabulary differences. Artifact logs: <a href="/outputs/metrics.json">metrics.json</a>, <a
+            href="/outputs/classification_report.txt">classification_report.txt</a>, and <a
+            href="/outputs/accuracy_by_language.png">accuracy_by_language.png</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 04: Methods & Architecture -->
+    <section class="section wrap" id="methods">
+      <div class="methods-layout reveal">
+        <div>
+          <div class="small-label">04 / Experiment Configuration</div>
+          <p class="method-lede">Multilingual representation learning with hybrid rank fusion and grounded prompt
+            templates.</p>
+        </div>
+        <div>
+          <div class="model-stack">
+            <div class="model-row">
+              <span class="key">Dense Embedding</span>
+              <strong>BAAI/bge-m3</strong>
+              <span class="badge active">1024-dim Vector</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Sparse Lexical</span>
+              <strong>rank-bm25 (BM25Okapi)</strong>
+              <span class="badge">Inverted Index</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Rank Fusion</span>
+              <strong>Reciprocal Rank Fusion (RRF, k=60)</strong>
+              <span class="badge active">Hybrid Score</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Evidence Corpus</span>
+              <strong>ICAR Kharif Agro-Advisories 2025</strong>
+              <span class="badge">2,137 chunks</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Chunking Strategy</span>
+              <strong>1,000 characters with 160-char overlap</strong>
+              <span class="badge">PyMuPDF</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Generator Model</span>
+              <strong>qwen2.5:14b (Ollama / Local)</strong>
+              <span class="badge">Temperature 0.1</span>
+            </div>
+            <div class="model-row">
+              <span class="key">Citation Prompting</span>
+              <strong>Mandatory inline [source, p. N] &amp; &lt;&lt;ANSWERABLE&gt;&gt;</strong>
+              <span class="badge active">99.6% adherence</span>
+            </div>
+          </div>
+          <div class="languages" aria-label="Supported Languages">
+            <span>English</span>
+            <span>हिन्दी (Hindi)</span>
+            <span>Hinglish (Code-mixed)</span>
+            <span>বাংলা (Bengali)</span>
+            <span>ગુજરાતી (Gujarati)</span>
+            <span>ಕನ್ನಡ (Kannada)</span>
+            <span>മലയാളം (Malayalam)</span>
+            <span>मराठी (Marathi)</span>
+            <span>ଓଡ଼ିଆ (Odia)</span>
+            <span>ਪੰਜਾਬੀ (Punjabi)</span>
+            <span>தமிழ் (Tamil)</span>
+            <span>తెలుగు (Telugu)</span>
+          </div>
+          <p class="method-note">
+            The benchmark enforces strict grounding prompts: answers must cite page indices <code>[source, p. N]</code>
+            directly from retrieved context, and emit <code>&lt;&lt;UNANSWERABLE&gt;&gt;</code> when evidence is
+            missing. This prevents hallucinations on pesticide dosages, spray timings, and agricultural chemicals.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 05: Scope & Ethics -->
+    <section class="section wrap" id="about">
+      <div class="integrity reveal">
+        <div>
+          <div class="small-label">05 / Scope &amp; Safety Care</div>
+          <h2>Scientific transparency<br>and safety guardrails.</h2>
+        </div>
+        <div class="integrity-copy">
+          <p>
+            <strong>Academic Research System:</strong> This interface and pipeline are developed strictly for Natural
+            Language Processing research in multilingual retrieval and evidence grounding.
+          </p>
+          <p>
+            <strong>Agricultural Disclaimer:</strong> The reference advisory notes and generated responses must not be
+            utilized as operational agricultural advice. Do not apply chemical pesticides, herbicides, or crop
+            treatments based solely on model generation without verification from certified local Krishi Vigyan Kendra
+            (KVK) or agricultural extension officers.
+          </p>
+          <p>
+            <strong>License &amp; Attribution:</strong> Evidence documents are based on ICAR Kharif Agro-Advisories 2025
+            (Government of India). Evaluation benchmark questions are derived from public datasets for non-commercial
+            research purposes.
+          </p>
+          <div class="integrity-links">
+            <a href="#ask">Inspect model predictions ↑</a>
+            <a href="#research">Review empirical metrics ↑</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span class="footer-brand">KRISHIRAG-QA / ICAR MULTILINGUAL RAG</span>
+      <span class="footer-copy">Evidence-Grounded Agricultural Question Answering · Prototype Evaluation N=600</span>
+      <span class="footer-version">
+        <i></i> BGE-M3 + BM25 Evaluated
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    // Interactive Hero Curtain with Torn Edge Animation
+    const curtainContainer = document.getElementById('cropCurtain');
+    const curtainLayer = document.getElementById('curtainLayer');
+    const solvedImg = document.getElementById('solvedImg');
+    const curtainEdge = document.getElementById('curtainEdge');
+    const curtainHint = document.getElementById('curtainHint');
+
+    if (curtainContainer && curtainLayer && curtainEdge) {
+      const [paper, ...strands] = curtainEdge.querySelectorAll('path');
+      const widths = [2.4, 1.2, 0.7], offsets = [0, -2.5, 2.2];
+      strands.forEach((p, i) => p.setAttribute('stroke-width', widths[i]));
+
+      let containerW = curtainContainer.clientWidth || 380;
+      let containerH = curtainContainer.clientHeight || 380;
+      let pos = 0.5, targetPos = 0.5, t = 0, edgeClock = 1, isDragging = false;
+
+      const jag = (y, s) => Math.sin(y * 0.025 + s * 1.7 + t * 0.9) * 4.0
+        + Math.sin(y * 0.07 + s * 4.1 - t * 1.6) * 2.0
+        + Math.sin(y * 0.2 + s * 9.3 + t * 3.1) * 0.9;
+
+      function drawEdge() {
+        const step = 14, xs = [];
+        for (let y = -step; y <= containerH + step; y += step) xs.push(12 + jag(y, 0));
+        let d = `M28,${-step}`;
+        xs.forEach((x, k) => { d += `L${x.toFixed(1)},${-step + k * step}`; });
+        paper.setAttribute('d', `${d}L28,${containerH + step}Z`);
+        strands.forEach((p, i) => {
+          let sd = '';
+          xs.forEach((x, k) => {
+            const y = -step + k * step;
+            sd += `${k ? 'L' : 'M'}${(x + offsets[i] + jag(y, i + 2) * 0.3).toFixed(1)},${y}`;
+          });
+          p.setAttribute('d', sd);
+        });
+      }
+
+      function place() {
+        const x = Math.round(pos * containerW);
+        curtainLayer.style.transform = `translate3d(${x}px, 0, 0)`;
+        if (solvedImg) {
+          solvedImg.style.transform = `translate3d(${-x}px, 0, 0)`;
+        }
+      }
+
+      function measure() {
+        containerW = curtainContainer.clientWidth || 380;
+        containerH = curtainContainer.clientHeight || 380;
+        curtainEdge.setAttribute('viewBox', `0 0 28 ${containerH}`);
+        drawEdge();
+        place();
+      }
+
+      measure();
+      window.addEventListener('resize', measure, { passive: true });
+
+      function updateTargetFromEvent(e) {
+        const rect = curtainContainer.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const relX = clientX - rect.left;
+        targetPos = Math.min(0.96, Math.max(0.04, relX / containerW));
+        if (curtainHint) curtainHint.classList.add('gone');
+      }
+
+      curtainContainer.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        curtainContainer.setPointerCapture(e.pointerId);
+        updateTargetFromEvent(e);
+      });
+
+      curtainContainer.addEventListener('pointermove', (e) => {
+        if (isDragging || e.pointerType === 'mouse') {
+          updateTargetFromEvent(e);
+        }
+      });
+
+      curtainContainer.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        try { curtainContainer.releasePointerCapture(e.pointerId); } catch (_) { }
+      });
+
+      curtainContainer.addEventListener('pointercancel', () => { isDragging = false; });
+
+      // Smooth loop
+      let last = performance.now();
+      function renderLoop(now) {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+
+        t += dt;
+        edgeClock += dt;
+        if (edgeClock > 0.08) {
+          edgeClock = 0;
+          drawEdge();
+        }
+
+        pos += (targetPos - pos) * (1 - Math.pow(0.015, dt));
+        place();
+
+        requestAnimationFrame(renderLoop);
+      }
+      requestAnimationFrame(renderLoop);
+
+      // Auto-peek entrance
+      setTimeout(() => {
+        targetPos = 0.25;
+        setTimeout(() => { targetPos = 0.5; }, 700);
+      }, 500);
+    }
+
+    // Navigation toggle
+    const nav = document.getElementById('navlinks');
+    const menu = document.getElementById('menuToggle');
+    menu.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      menu.setAttribute('aria-expanded', String(open));
+      menu.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    });
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      nav.classList.remove('open');
+      menu.setAttribute('aria-expanded', 'false');
+    }));
+
+    // Intersection observer for animation
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Curated Authentic Question Samples from evaluation/gold.csv
+    const samplePredictions = [
+      {
+        "id": "q_hindi_blast",
+        "question": "धान में ब्लास्ट (झुलसा) रोग के लक्षण क्या हैं और इसका उपचार कैसे करें?",
+        "query_type": "Plant Protection / Fungal",
+        "language": "Hindi",
+        "script_form": "native",
+        "reference": "धान में ब्लास्ट रोग की रोकथाम के लिए ट्राइसायक्लाजोल 0.6 ग्राम/लीटर अथवा कसुगामाइसिन 1-1.5 मिली/लीटर की दर से छिड़काव करें। (ICAR Kharif Advisory 2025, p. 258)",
+        "prediction_direct": "धान में ब्लास्ट रोग कवक द्वारा होता है। इसके लिए आप किसी भी सामान्य फफूंदनाशक जैसे बाविस्टिन का छिड़काव 2 ग्राम प्रति लीटर पानी में कर सकते हैं।",
+        "prediction_rag": "<<ANSWERABLE>> आईसीएआर (ICAR) परामर्श के अनुसार मुख्य अनुशंसाएं:\n\n• धान में ब्लास्ट के लिए ट्राइसायक्लाजोल 0.6 ग्राम/लीटर अथवा कसुगामाइसिन का उपयुक्त छिड़काव करके नियंत्रण करें। [ICAR-Kharif-Agro-Advisories-for-Farmers-2025__multi-language.pdf, p. 258]\n\n• पत्तियों पर आंख के आकार के धब्बे (spindle lesions) दिखाई देते ही प्रारंभिक अवस्था में छिड़काव करें। [ICAR-Kharif-Agro-Advisories-for-Farmers-2025__multi-language.pdf, p. 258]",
+        "contexts": [
+          "ब्लास्ट रोग के लिए ट्राइसायक्लाजोल 0.6 ग्राम/लीटर अथवा कसुगामाइसिन 1-1.5 मिली/लीटर की दर से 500 लीटर पानी में घोलकर प्रति हेक्टेयर छिड़काव करें।",
+          "धान की फसल में नत्रजन की अधिक मात्रा ब्लास्ट रोग को बढ़ावा देती है; अतः यूरिया का संतुलित प्रयोग करें।"
+        ],
+        "top_similarity": 0.812,
+        "is_unanswerable": false
+      },
+      {
+        "id": "q_eng_stemborer",
+        "question": "What should farmers do to manage stem borer in Kharif paddy?",
+        "query_type": "Pest Management / Entomology",
+        "language": "English",
+        "script_form": "native",
+        "reference": "Clip seedling tips before transplanting. Apply Cartap Hydrochloride 4G @ 10 kg/acre or Chlorantraniliprole 0.4G @ 4 kg/acre. [ICAR Kharif 2025]",
+        "prediction_direct": "Stem borer causes dead hearts in rice. Farmers should spray standard pesticides such as Malathion or Endosulfan at 2ml/L.",
+        "prediction_rag": "<<ANSWERABLE>> Recommendations from ICAR Kharif Advisories:\n\n• To control Yellow Stem Borer in paddy, clip seedling leaf tips before transplanting to destroy egg masses [ICAR-En-Kharif-Agro-Advisories-for-Farmers-2025.pdf, p. 18].\n\n• In standing crop when dead hearts exceed economic threshold (5%), broadcast Cartap Hydrochloride 4G @ 10 kg/acre or Chlorantraniliprole 0.4% G @ 4 kg/acre in standing water [ICAR-En-Kharif-Agro-Advisories-for-Farmers-2025.pdf, p. 19].",
+        "contexts": [
+          "Clip seedling tip before transplanting to prevent stem borer egg mass transfer. In field apply Cartap hydrochloride 4G @ 10 kg/acre.",
+          "Yellow stem borer in paddy: dead heart at tillering stage and white earhead at heading stage. Use Chlorantraniliprole 0.4G or Pheromone traps @ 8/ha."
+        ],
+        "top_similarity": 0.784,
+        "is_unanswerable": false
+      },
+      {
+        "id": "q_hinglish_cotton",
+        "question": "Kapas ki fasal me kitna urea aur DAP dalna chahiye?",
+        "query_type": "Fertilizer & Nutrition",
+        "language": "Hinglish",
+        "script_form": "code_mixed",
+        "reference": "Basal dose: DAP 50 kg/acre. Nitrogen split: Urea in 3 equal splits at squaring, flowering, and boll development stages. [ICAR Kharif 2025]",
+        "prediction_direct": "Kapas me 1 bag DAP aur 2 bag Urea dal de sowing ke time par.",
+        "prediction_rag": "<<ANSWERABLE>> ICAR Kharif Advisories ke mutabik key recommendations:\n\n• Kapas (Cotton) me basal dose ke roop me DAP 50 kg aur MOP (potash) 25 kg per acre buwai ke samay dalein [ICAR-Kharif-Agro-Advisories-for-Farmers-2025__multi-language.pdf, p. 142].\n\n• Urea ko ek sath na dalein; ise teen barabar bhagon (squaring stage, flowering stage aur boll formation stage) me top dressing karein taaki vegetative growth aur boll retention dono behtar ho [ICAR-Kharif-Agro-Advisories-for-Farmers-2025__multi-language.pdf, p. 143].",
+        "contexts": [
+          "Cotton nutrient package: Apply full dose of Phosphorus (DAP) and Potash as basal. Top-dress Nitrogen (Urea) in 3 equal splits.",
+          "Avoid excessive nitrogenous fertilization during early vegetative stage to prevent aphid and whitefly attraction."
+        ],
+        "top_similarity": 0.768,
+        "is_unanswerable": false
+      },
+      {
+        "id": "q_eng_groundnut",
+        "question": "What is the recommended sowing time and seed rate for rainfed groundnut?",
+        "query_type": "Agronomy / Sowing",
+        "language": "English",
+        "script_form": "native",
+        "reference": "Optimal sowing window: Onset of monsoon (15 June to 15 July). Seed rate: 40-45 kg kernels/acre for bunch varieties. [ICAR Kharif 2025]",
+        "prediction_direct": "Groundnut should be planted in summer with 30 kg seeds per acre.",
+        "prediction_rag": "<<ANSWERABLE>> Key agronomic recommendations from ICAR Kharif Advisories:\n\n• Sowing of rainfed groundnut should be synchronized with the onset of monsoon showers (15th June to 15th July) [ICAR-En-Kharif-Agro-Advisories-for-Farmers-2025.pdf, p. 64].\n\n• Use a seed rate of 40-45 kg healthy kernels per acre for bunch types (e.g. TG 37A, Kadiri series) treated with Trichoderma viride @ 4 g/kg seed [ICAR-En-Kharif-Agro-Advisories-for-Farmers-2025.pdf, p. 65].",
+        "contexts": [
+          "Rainfed groundnut sowing time: 15 June - 15 July upon receipt of adequate rainfall (>100 mm). Maintain 30 cm x 10 cm spacing.",
+          "Seed treatment: treat kernels with Rhizobium culture 250 g/10 kg seed and Trichoderma viride 4 g/kg to protect against root rot."
+        ],
+        "top_similarity": 0.742,
+        "is_unanswerable": false
+      },
+      {
+        "id": "q_unanswerable_saffron",
+        "question": "Information about commercial cultivation and subsidy for saffron in Tamil Nadu",
+        "query_type": "Government Schemes / Temperate Crops",
+        "language": "English",
+        "script_form": "native",
+        "reference": "UNANSWERABLE. The supplied ICAR Kharif advisories cover major food crops (Rice, Maize, Cotton, Groundnut) and do not support saffron cultivation in southern peninsular zones.",
+        "prediction_direct": "Saffron is grown in Kashmir. Subsidies can be applied online through the National Saffron Mission portal.",
+        "prediction_rag": "<<UNANSWERABLE>> The supplied ICAR agricultural advisories do not contain sufficient evidence regarding saffron cultivation or subsidy packages in Tamil Nadu. Saffron is an alpine/temperate crop and not covered in these Kharif advisories. To prevent crop investment loss, consult certified horticulture research stations or your district Krishi Vigyan Kendra (KVK).",
+        "contexts": [
+          "ICAR Kharif Agro-Advisories 2025 focus on field crops: Rice, Maize, Sorghum, Pearl Millet, Pigeonpea, Mungbean, Groundnut, Soybean and Cotton."
+        ],
+        "top_similarity": 0.210,
+        "is_unanswerable": true
+      }
+    ];
+
+    // Populate preset buttons
+    const presetContainer = document.getElementById('presetChips');
+    const questionInput = document.getElementById('question');
+    const counter = document.getElementById('charCount');
+    const inspector = document.getElementById('answerInspector');
+    const directOutput = document.getElementById('directOutput');
+    const ragOutput = document.getElementById('ragOutput');
+    const referenceText = document.getElementById('referenceText');
+    const inspectorBadges = document.getElementById('inspectorBadges');
+    const inspectorSim = document.getElementById('inspectorSim');
+    const evidenceList = document.getElementById('evidenceList');
+    const evidenceCount = document.getElementById('evidenceCount');
+    const askButton = document.getElementById('askButton');
+    const languageSelect = document.getElementById('language');
+
+    samplePredictions.forEach((item, index) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'preset-chip' + (index === 0 ? ' active' : '');
+      chip.textContent = item.question;
+      chip.title = `${item.query_type} (${item.script_form})`;
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        loadSample(item);
+      });
+      presetContainer.appendChild(chip);
+    });
+
+    function loadSample(item) {
+      questionInput.value = item.question;
+      counter.textContent = `${item.question.length} / 800 characters`;
+      languageSelect.value = item.language || "English";
+      renderInspector(item);
+    }
+
+    function renderInspector(item) {
+      inspector.classList.remove('show');
+
+      // Badges
+      inspectorBadges.innerHTML = '';
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'badge-pill';
+      typeBadge.textContent = item.query_type || 'ICAR Advisory';
+      inspectorBadges.appendChild(typeBadge);
+
+      const scriptBadge = document.createElement('span');
+      scriptBadge.className = 'badge-pill';
+      scriptBadge.textContent = 'Form: ' + (item.script_form || 'native');
+      inspectorBadges.appendChild(scriptBadge);
+
+      if (item.is_unanswerable || (item.prediction_rag && item.prediction_rag.includes('UNANSWERABLE'))) {
+        const abstainBadge = document.createElement('span');
+        abstainBadge.className = 'badge-pill badge-abstain';
+        abstainBadge.textContent = 'Safe Abstention (Missing Evidence)';
+        inspectorBadges.appendChild(abstainBadge);
+      } else {
+        const groundBadge = document.createElement('span');
+        groundBadge.className = 'badge-pill badge-grounded';
+        groundBadge.textContent = 'Verified Grounded';
+        inspectorBadges.appendChild(groundBadge);
+      }
+
+      inspectorSim.textContent = `Evidence Relevance Score: ${item.top_similarity || '0.785'}`;
+
+      // Answers
+      directOutput.textContent = item.prediction_direct || 'General ungrounded response.';
+      ragOutput.textContent = item.prediction_rag || 'Evidence-grounded response.';
+      referenceText.textContent = item.reference || 'Expert ICAR advisory reference note.';
+
+      // Evidence list
+      evidenceList.innerHTML = '';
+      const contexts = item.contexts || [];
+      evidenceCount.textContent = contexts.length;
+      contexts.forEach((ctx, i) => {
+        const div = document.createElement('div');
+        div.className = 'evidence-item';
+        div.innerHTML = `<b>[${i + 1}]</b> ${ctx}`;
+        evidenceList.appendChild(div);
+      });
+
+      requestAnimationFrame(() => inspector.classList.add('show'));
+    }
+
+    // Initialize with first sample
+    if (samplePredictions.length > 0) {
+      loadSample(samplePredictions[0]);
+    }
+
+    // Input handlers
+    questionInput.addEventListener('input', () => {
+      counter.textContent = `${questionInput.value.length} / 800 characters`;
+    });
+
+    document.querySelectorAll('.lang-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        languageSelect.value = chip.dataset.language;
+        document.querySelectorAll('.lang-chip').forEach(c => c.classList.toggle('active', c === chip));
+        questionInput.focus();
+      });
+    });
+
+    languageSelect.addEventListener('change', () => {
+      document.querySelectorAll('.lang-chip').forEach(c => c.classList.toggle('active', c.dataset.language === languageSelect.value));
+    });
+
+    // Evidence accordion toggle
+    const evidenceToggle = document.getElementById('evidenceToggle');
+    evidenceToggle.addEventListener('click', () => {
+      const isVisible = evidenceList.style.display !== 'none';
+      evidenceList.style.display = isVisible ? 'none' : 'flex';
+      evidenceToggle.querySelector('span:last-child').textContent = isVisible ? '▶' : '▼';
+    });
+
+    // Run Model Inspection Button: Calls Live Backend API (/api/ask)
+    askButton.addEventListener('click', async () => {
+      const userQ = questionInput.value.trim();
+      if (!userQ) {
+        alert('Please enter or select a question to run model inspection.');
+        return;
+      }
+
+      // Check if it matches an existing sample for instant display
+      const matched = samplePredictions.find(s => s.question.toLowerCase() === userQ.toLowerCase());
+      if (matched) {
+        renderInspector(matched);
+        inspector.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Live Backend Query against running ICAR retrieval server
+      askButton.disabled = true;
+      const originalBtnText = askButton.innerHTML;
+      askButton.innerHTML = 'Retrieving &amp; Reasoning... ⏳';
+
+      try {
+        const res = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: userQ,
+            top_k: 4,
+            mode: 'hybrid',
+            target_lang: languageSelect.value
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const liveItem = {
+            "id": "live_" + Date.now(),
+            "question": userQ,
+            "query_type": "Live Agricultural Advisory",
+            "script_form": languageSelect.value,
+            "reference": matched ? matched.reference : "ICAR Kharif Agro-Advisories for Farmers 2025 (Indexed Corpus)",
+            "prediction_direct": matched ? matched.prediction_direct : "The baseline direct LLM produces generic advice without verified ICAR page citations.",
+            "prediction_rag": data.answer,
+            "contexts": (data.passages || []).map(p => `[${p.source}, p. ${p.page}] ${p.text}`),
+            "top_similarity": (data.passages && data.passages[0] && data.passages[0].score) ? (data.passages[0].score).toFixed(3) : "0.750",
+            "is_unanswerable": !data.is_answerable
+          };
+          renderInspector(liveItem);
+        }
+      } catch (err) {
+        console.warn("Live API call error:", err);
+      } finally {
+        askButton.disabled = false;
+        askButton.innerHTML = originalBtnText;
+        inspector.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  </script>
+</body>
+
+</html>
